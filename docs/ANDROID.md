@@ -1,0 +1,39 @@
+# Let's Go Recomp on Android (work in progress)
+
+A native arm64 Android build of the runtime, after [LASRecomp-Android-Plus](https://github.com/Nycolazs/LASRecomp-Android-Plus)
+(MIT), which does the same for LAS Recomp. Status: the runtime builds for Android in principle; the app has not been
+built or run on a device yet.
+
+## What differs from the desktop builds
+
+- **Guest layout.** Android's zygote maps 0x70_0000_0000, where the Switch layout puts the game. On Android the whole
+  guest window sits `GUEST_SHIFT` (0x60_0000_0000) lower (`runtime/cpu.h`). The generator takes `--shift` and writes
+  shifted bases while function and label names, patches and hooks keep their Switch addresses.
+- **Vulkan through volk** (`VK_NO_PROTOTYPES`): Android's libvulkan exports only the core entry points. `make VOLK=<volk
+  checkout>` builds that path on Linux too. The renderer still needs a Vulkan 1.3 driver.
+- **Platform layer:** `runtime/platform/android.c`: logcat + `lasrecomp.log`, no re-exec, libmain.so as the executable.
+- **Data folder:** `Android/data/com.letsgorecomp.android/files/` (reachable over USB). Put the game files in
+  `extracted/` there, the same as on desktop.
+- **Game code:** `liblasgame.so`, built on a computer from your own game files and packed into a personal APK.
+
+## Building (Linux or macOS)
+
+Needs the Android SDK with NDK 27.2.12479018, CMake, Ninja, JDK 17, Python 3 and Gradle (or Android Studio). The
+Gradle wrapper isn't committed: make it once with `cd android && gradle wrapper` (the version is in
+`android/gradle/wrapper/gradle-wrapper.properties`).
+
+```
+tools/android/build_deps.sh                         # FFmpeg, shaderc, Vulkan headers, VMA, volk, SDL3 sources
+(cd android && ./gradlew assembleDebug)             # the app: libmain.so + libSDL3.so
+tools/android/build_game.sh extracted --apk         # liblasgame.so from your exefs/, and a personal APK with it
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+The personal APK holds code made from the game: keep it to yourself.
+
+## Not done yet
+
+- Touch controls (a controller works through SDL).
+- Drivers older than Vulkan 1.3 (Android-Plus bundles Mesa Turnip for Adreno 6xx).
+- Building the game code on the device; the start screen's game file import (copy the files over USB for now).
+- Page write tracking (`plat_watch_writes`): off, as on Linux.

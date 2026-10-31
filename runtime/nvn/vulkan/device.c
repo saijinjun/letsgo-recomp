@@ -21,6 +21,7 @@
 #include "fsr3.h"
 #include "../output_scale.h"
 #include "../renderer.h"
+#include "../../hle/touch.h"
 
 VkG g_vk;
 static SDL_Window *window;
@@ -1227,6 +1228,7 @@ void ui_window_init(void) {
     if (window) return;
     atexit(quick_exit_handler);
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    if (getenv("LARECOMP_TOUCH") && atoi(getenv("LARECOMP_TOUCH"))) SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");  // (the mouse as a finger: hle/touch.c)
     settings_load();
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) FATAL("SDL_Init: %s\n", SDL_GetError());
     input_load_user_mappings();
@@ -1285,6 +1287,7 @@ int ui_run(void) {
             }
             if (input_user_blocked(&e)) continue;  // scripted test runs: the real keyboard / mouse / pads do nothing
             if (menu_handle_event(&e)) continue;
+            if (touch_handle_event(&e, window)) continue;
             input_handle_event(&e);
         }
         menu_apply_window_requests(window);

@@ -14,6 +14,9 @@ built or run on a device yet.
 - **Platform layer:** `runtime/platform/android.c`: logcat + `lasrecomp.log`, no re-exec, libmain.so as the executable.
 - **Data folder:** `Android/data/com.letsgorecomp.android/files/` (reachable over USB). Put the game files in
   `extracted/` there, the same as on desktop.
+- **Touch controls** (`runtime/hle/touch.c`): a floating left stick, A B X Y, L/ZL, R/ZR, - and +, and a settings
+  button; other fingers touch the game's screen. They hide when a controller or keyboard is used. `LARECOMP_TOUCH=1`
+  shows them on the desktop with the mouse as a finger. The back button opens the menu.
 - **Game code:** `liblasgame.so`, built on a computer from your own game files and packed into a personal APK.
 
 ## Building (Linux or macOS)
@@ -33,7 +36,6 @@ The personal APK holds code made from the game: keep it to yourself.
 
 ## Not done yet
 
-- Touch controls (a controller works through SDL).
 - Drivers older than Vulkan 1.3 (Android-Plus bundles Mesa Turnip for Adreno 6xx).
 - Building the game code on the device; the start screen's game file import (copy the files over USB for now).
 - Page write tracking (`plat_watch_writes`): off, as on Linux.

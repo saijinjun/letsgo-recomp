@@ -1,8 +1,8 @@
 # Let's Go Recomp on Android (work in progress)
 
 A native arm64 Android build of the runtime, after [LASRecomp-Android-Plus](https://github.com/Nycolazs/LASRecomp-Android-Plus)
-(MIT), which does the same for LAS Recomp. Status: the runtime builds for Android in principle; the app has not been
-built or run on a device yet.
+(MIT), which does the same for LAS Recomp. Status: the app (libmain.so + libSDL3.so) builds with NDK 27.2 and Gradle,
+debug and release; it has not been run on a device yet.
 
 ## What differs from the desktop builds
 
@@ -21,7 +21,8 @@ built or run on a device yet.
 
 ## Building (Linux or macOS)
 
-Needs the Android SDK with NDK 27.2.12479018, CMake, Ninja, JDK 17, Python 3 and Gradle (or Android Studio). The
+Needs the Android SDK with NDK 27.2.12479018 (and platform 36), CMake, Ninja, git, JDK 17 or newer, Python 3 and Gradle
+(or Android Studio). `build_deps.sh` takes SDL3 from its release and the rest from git at pinned commits. The
 Gradle wrapper isn't committed: make it once with `cd android && gradle wrapper` (the version is in
 `android/gradle/wrapper/gradle-wrapper.properties`).
 

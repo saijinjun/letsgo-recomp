@@ -41,7 +41,8 @@ UiFonts ui_load_fonts(void) {
     UiFonts f = {};
     // (Segoe UI Semibold first: dark text on light pills, as the game's)
     const char *paths[] = {"C:/Windows/Fonts/seguisb.ttf", "C:/Windows/Fonts/segoeui.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-                           "/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf"};
+                           "/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf",
+                           "/system/fonts/Roboto-Regular.ttf"};
     for (const char *p : paths) {
         if (FILE *fp = fopen(p, "rb")) fclose(fp);  // (a missing file is an assertion in ImGui, not a NULL return)
         else continue;

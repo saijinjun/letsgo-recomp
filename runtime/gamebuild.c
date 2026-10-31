@@ -324,6 +324,12 @@ bool gamebuild_run(const char *game_dir, const GameBuildOpts *o, char *why, size
         add(&a, base[i]);
         add(&a, g->out);
         if (i == 1) { add(&a, "--hle"); add(&a, t.hle); }
+        if (GUEST_SHIFT) {  // (the bases above are the Switch layout's; the modules run GUEST_SHIFT lower, runtime/cpu.h)
+            char shift[24];
+            snprintf(shift, sizeof shift, "%#llx", (unsigned long long)GUEST_SHIFT);
+            add(&a, "--shift");
+            add(&a, shift);
+        }
         g->p = spawn(a.v, g->log);
         args_free(&a);
         if (!g->p) { snprintf(why, why_size, "the game code builder didn't start"); ok = false; }

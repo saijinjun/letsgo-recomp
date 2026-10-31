@@ -11,6 +11,9 @@
 #if defined(_WIN32)
 #define GAMELIB_NAME "lasgame.dll"
 #define GAMELIB_EXPORT __declspec(dllexport)
+#elif defined(__ANDROID__)
+#define GAMELIB_NAME "liblasgame.so"  // (the lib*.so name an APK's libraries need)
+#define GAMELIB_EXPORT __attribute__((visibility("default")))
 #elif defined(__APPLE__)
 #define GAMELIB_NAME "lasgame.dylib"
 #define GAMELIB_EXPORT __attribute__((visibility("default")))

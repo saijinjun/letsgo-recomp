@@ -1,5 +1,8 @@
 // LAS Recomp entry: load modules, set up the kernel, run nn::init::Start on the main thread.
 #include <SDL3/SDL.h>
+#ifdef __ANDROID__
+#include <SDL3/SDL_main.h>  // (main() becomes the SDL_main the Java activity calls)
+#endif
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,9 +41,14 @@ static void rtld_init_main(Cpu *c) { module_init(c, &g_modules[0]); }
 
 // Claim the guest address range before anything else can map there. The host allocator places
 // regions at random addresses in the same window; on a collision, re-exec for a fresh layout.
+// Android: no re-exec (the app is forked from the zygote, whose layout it keeps): main() tries again and reports it.
+static bool g_guest_reserved;
 __attribute__((constructor(101))) static void reserve_guest_space(void) {
     plat_watch_writes(HEAP_BASE);  // (the heap's written pages: vertex data the GPU ring keeps from one frame to the next, exec.c)
-    if (plat_reserve_guest(GUEST_LO, GUEST_HI)) return;
+    if ((g_guest_reserved = plat_reserve_guest(GUEST_LO, GUEST_HI))) return;
+#ifdef __ANDROID__
+    return;
+#endif
     const char *tries = getenv("LARECOMP_REEXEC");
     int n = tries ? atoi(tries) : 0;
     if (n >= 20) {
@@ -178,6 +186,14 @@ int main(int argc, char **argv) {
         else if (argv[i][0] != '-') root = arg_root;
     }
     rt_paths_init();  // the data root becomes the working directory (runtime/paths.h)
+#ifdef __ANDROID__
+    if (!g_guest_reserved && !plat_reserve_guest(GUEST_LO, GUEST_HI)) {
+        LOG("FATAL: guest address range %llx-%llx is not free\n", GUEST_LO, GUEST_HI);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, RT_APP_NAME, "The game's memory range is taken on this device. "
+                                 "Restart the device and try again.", NULL);
+        return 1;
+    }
+#endif
     for (bool title = !skip_launcher;;) {
         if (title) {  // start screen: resolution, fullscreen, anti-aliasing, translation, keys (runtime/ui/launcher_lg.mm)
             extern void launcher_lg_run(const char *root);

@@ -34,3 +34,10 @@ NVIDIA Corporation/
 fonts/*.bfttf
 fonts/*.ttf
 
+
+# Android (android/, tools/android/)
+android/.gradle/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+android/keystore.properties

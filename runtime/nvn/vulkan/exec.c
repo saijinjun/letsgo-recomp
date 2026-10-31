@@ -1,6 +1,10 @@
 // Executes recorded NVN command lists with Vulkan (port of renderer.m; same structure, same behaviour).
 #include <SDL3/SDL_cpuinfo.h>
+#if defined(__x86_64__)
 #include <immintrin.h>
+#elif defined(__aarch64__)
+#include <arm_neon.h>
+#endif
 #include <SDL3/SDL_timer.h>
 #include <float.h>
 #include <math.h>
@@ -380,6 +384,7 @@ VkDescriptorSet vk_alloc_set(VkDescriptorSetLayout layout) {
 // ================================================================== transient memory ring
 // The largest index of a draw (bounds the vertex data copied for it), ignoring the restart value: AVX2 where the CPU has it (the
 // game code needs it too), a plain loop elsewhere. A draw scans a few thousand indices: ~1.4 us scalar, ~0.15 us here.
+#if defined(__x86_64__)
 __attribute__((target("avx2"))) static uint32_t scan_max16_avx2(const uint16_t *q, uint32_t n, uint16_t restart) {
     __m256i acc = _mm256_setzero_si256(), rs = _mm256_set1_epi16((short)restart);
     uint32_t i = 0;
@@ -408,7 +413,34 @@ __attribute__((target("avx2"))) static uint32_t scan_max32_avx2(const uint32_t *
     for (; i < n; i++) if (q[i] != restart && q[i] > m) m = q[i];
     return m;
 }
+#elif defined(__aarch64__)  // (NEON: every arm64 CPU has it)
+static uint32_t scan_max16_neon(const uint16_t *q, uint32_t n, uint16_t restart) {
+    uint16x8_t acc = vdupq_n_u16(0), rs = vdupq_n_u16(restart);
+    uint32_t i = 0;
+    for (; i + 8 <= n; i += 8) {
+        uint16x8_t v = vld1q_u16(q + i);
+        acc = vmaxq_u16(acc, vbicq_u16(v, vceqq_u16(v, rs)));
+    }
+    uint32_t m = vmaxvq_u16(acc);
+    for (; i < n; i++) if (q[i] != restart && q[i] > m) m = q[i];
+    return m;
+}
+static uint32_t scan_max32_neon(const uint32_t *q, uint32_t n, uint32_t restart) {
+    uint32x4_t acc = vdupq_n_u32(0), rs = vdupq_n_u32(restart);
+    uint32_t i = 0;
+    for (; i + 4 <= n; i += 4) {
+        uint32x4_t v = vld1q_u32(q + i);
+        acc = vmaxq_u32(acc, vbicq_u32(v, vceqq_u32(v, rs)));
+    }
+    uint32_t m = vmaxvq_u32(acc);
+    for (; i < n; i++) if (q[i] != restart && q[i] > m) m = q[i];
+    return m;
+}
+#endif
 static uint32_t scan_max_index_(const void *src, uint32_t isz, uint32_t n, uint32_t restart) {
+#if defined(__aarch64__)
+    return isz == 2 ? scan_max16_neon(src, n, (uint16_t)restart) : scan_max32_neon(src, n, restart);
+#else
     static int avx2 = -1;
     if (avx2 < 0) avx2 = __builtin_cpu_supports("avx2");
     uint32_t m = 0;
@@ -422,6 +454,7 @@ static uint32_t scan_max_index_(const void *src, uint32_t isz, uint32_t n, uint3
         for (uint32_t i = 0; i < n; i++) if (q[i] > m && q[i] != restart) m = q[i];
     }
     return m;
+#endif
 }
 static uint32_t scan_max_index(const void *src, uint32_t isz, uint32_t n, uint32_t restart) {
     PROF_T0();
@@ -673,7 +706,11 @@ static void acopy_drain(void) {
     if (atomic_load(&acq_done) >= want) return;
     PROF_T0();
     while (acopy_take_one()) {}
+#if defined(__x86_64__)
     while (atomic_load(&acq_done) < want) __builtin_ia32_pause();
+#else
+    while (atomic_load(&acq_done) < want) __asm__ volatile("yield");
+#endif
     PROF_ADD(prof_gcpy_wait_ns);
 }
 static void acopy_push(void *dst, const void *src, uint64_t n) {

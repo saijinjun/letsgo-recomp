@@ -21,6 +21,7 @@
 #include "fsr3.h"
 #include "../output_scale.h"
 #include "../renderer.h"
+#include "../../hle/touch.h"
 
 VkG g_vk;
 static SDL_Window *window;
@@ -51,6 +52,9 @@ static void create_instance(void) {
     VkInstanceCreateInfo ci = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, .pApplicationInfo = &app,
                                .enabledExtensionCount = n_ext, .ppEnabledExtensionNames = ext,
                                .enabledLayerCount = validate ? 1 : 0, .ppEnabledLayerNames = layers};
+#ifdef VK_NO_PROTOTYPES
+    if (volkInitialize() != VK_SUCCESS) FATAL("no Vulkan loader (libvulkan) found\n");
+#endif
     VkResult r = vkCreateInstance(&ci, NULL, &g_vk.inst);
     if (r != VK_SUCCESS && validate) {
         LOG("[vk] validation layer unavailable (%d); continuing without\n", r);
@@ -60,6 +64,9 @@ static void create_instance(void) {
         r = vkCreateInstance(&ci, NULL, &g_vk.inst);
     }
     if (r != VK_SUCCESS) FATAL("vkCreateInstance: %d (is a Vulkan 1.3 driver installed?)\n", r);
+#ifdef VK_NO_PROTOTYPES
+    volkLoadInstance(g_vk.inst);
+#endif
     if (validate) {
         PFN_vkCreateDebugUtilsMessengerEXT f =
             (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(g_vk.inst, "vkCreateDebugUtilsMessengerEXT");
@@ -245,6 +252,9 @@ static void create_device(void) {
     VkDeviceCreateInfo di = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, .pNext = &f, .queueCreateInfoCount = 1,
                              .pQueueCreateInfos = qi, .enabledExtensionCount = n_ext, .ppEnabledExtensionNames = ext};
     VK_CHECK(vkCreateDevice(g_vk.phys, &di, NULL, &g_vk.dev));
+#ifdef VK_NO_PROTOTYPES
+    volkLoadDevice(g_vk.dev);
+#endif
     vkGetDeviceQueue(g_vk.dev, g_vk.qfam, 0, &g_vk.queue);
     present_q = g_vk.queue;
     if (nqueues == 2 && !getenv("LARECOMP_ONE_QUEUE")) vkGetDeviceQueue(g_vk.dev, g_vk.qfam, 1, &present_q);
@@ -252,6 +262,10 @@ static void create_device(void) {
 
     VmaAllocatorCreateInfo ai = {.physicalDevice = g_vk.phys, .device = g_vk.dev, .instance = g_vk.inst,
                                  .vulkanApiVersion = VK_API_VERSION_1_3};
+#ifdef VK_NO_PROTOTYPES
+    VmaVulkanFunctions vf = {.vkGetInstanceProcAddr = vkGetInstanceProcAddr, .vkGetDeviceProcAddr = vkGetDeviceProcAddr};
+    ai.pVulkanFunctions = &vf;
+#endif
     VK_CHECK(vmaCreateAllocator(&ai, &g_vk.vma));
 
     VkSemaphoreTypeCreateInfo st = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
@@ -938,7 +952,7 @@ void backend_present(NvnTexture *t) {
     {   // (LARECOMP_HEAL_KEYS research key F5: every texture re-checks its memory)
         extern volatile int g_heal_tex;
         extern void backend_pool_written(uint64_t addr, uint64_t size);
-        if (g_heal_tex) { g_heal_tex = 0; backend_pool_written(0x7000000000ull, 0x320000000ull); }
+        if (g_heal_tex) { g_heal_tex = 0; backend_pool_written(GUEST_LO, GUEST_HI - GUEST_LO); }
     }
     // (the images of the present before last still waiting: this one's replays write their kept images - exec.c keeps
     // two sets; the last present's can wait for their time)
@@ -1214,6 +1228,7 @@ void ui_window_init(void) {
     if (window) return;
     atexit(quick_exit_handler);
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    if (getenv("LARECOMP_TOUCH") && atoi(getenv("LARECOMP_TOUCH"))) SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "1");  // (the mouse as a finger: hle/touch.c)
     settings_load();
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) FATAL("SDL_Init: %s\n", SDL_GetError());
     input_load_user_mappings();
@@ -1272,6 +1287,7 @@ int ui_run(void) {
             }
             if (input_user_blocked(&e)) continue;  // scripted test runs: the real keyboard / mouse / pads do nothing
             if (menu_handle_event(&e)) continue;
+            if (touch_handle_event(&e, window)) continue;
             input_handle_event(&e);
         }
         menu_apply_window_requests(window);

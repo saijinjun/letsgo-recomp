@@ -26,6 +26,7 @@ extern "C" {
 #include "../input_bind.h"
 #include "../settings.h"
 #include "menu.h"
+#include "../hle/touch.h"
 #include "../paths.h"
 void input_reset(void);
 uint64_t rt_addr(uint64_t eevee);  // runtime/fnhook.c (0: a build without the tables the frame rate modes need)
@@ -78,6 +79,7 @@ static void set_cfg(bool open) {
     input_reset();
     if (!open) settings_save();
 }
+void menu_toggle_settings(void) { set_cfg(!g_cfg.load()); }  // (the on-screen controls' settings button: hle/touch.c)
 // (LARECOMP_MENU_AT: runtime/nvn/vulkan/device.c; LARECOMP_MENU_PAGE=cfg / adv / <tab number>: the F12 settings on that
 // tab instead - cfg the first, adv the advanced one)
 extern "C" void menu_test_open(void) {
@@ -159,6 +161,12 @@ static SDL_Scancode cfg_key(void) {
 
 bool menu_handle_event(const SDL_Event *e) {
     static bool back_down, start_down;
+    SDL_Event back;  // (Android's back button / gesture: Esc)
+    if ((e->type == SDL_EVENT_KEY_DOWN || e->type == SDL_EVENT_KEY_UP) && e->key.scancode == SDL_SCANCODE_AC_BACK) {
+        back = *e;
+        back.key.scancode = SDL_SCANCODE_ESCAPE, back.key.key = SDLK_ESCAPE;
+        e = &back;
+    }
     if (e->type == SDL_EVENT_KEY_DOWN) g_last_pad = false;
     if (e->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) g_last_pad = true;
     bool typing = g_kbd.load() == 1;  // (the name entry: keys are text, not shortcuts)
@@ -577,7 +585,8 @@ void menu_render(void *cmd, uint32_t target_w, uint32_t target_h) {
     bool open = g_open.load(), cfg = g_cfg.load(), kbd = g_kbd.load() == 1;
     float fx, fy;
     bool fdown, finger = !open && !cfg && input_finger_cursor(&fx, &fy, &fdown);
-    if (!open && !cfg && !kbd && !g_settings.show_fps && !finger) {
+    bool touch = !open && !cfg && !kbd && touch_active();
+    if (!open && !cfg && !kbd && !g_settings.show_fps && !finger && !touch) {
         if (g_inited) { pthread_mutex_lock(&q_lock); q_events.clear(); pthread_mutex_unlock(&q_lock); }
         return;
     }
@@ -614,6 +623,23 @@ void menu_render(void *cmd, uint32_t target_w, uint32_t target_h) {
         float r = 26 * scale;
         dl->AddCircleFilled(ImVec2(fx, fy), r, fdown ? IM_COL32(255, 255, 255, 170) : IM_COL32(255, 255, 255, 60));
         dl->AddCircle(ImVec2(fx, fy), r, IM_COL32(255, 255, 255, 235), 0, 4 * scale);
+    }
+    if (touch) {  // the on-screen controls (hle/touch.c), in the window's units: scaled to the output
+        int ww = 0, wh = 0;
+        SDL_Window *win = SDL_GetKeyboardFocus();
+        if (!win || !SDL_GetWindowSize(win, &ww, &wh) || ww <= 0 || wh <= 0) ww = (int)target_w, wh = (int)target_h;
+        TouchShape sh[24];
+        int n = touch_shapes(sh, 24, (float)target_w / ww, (float)target_h / wh);
+        ImDrawList *dl = ImGui::GetForegroundDrawList();
+        for (int i = 0; i < n; i++) {
+            ImVec2 c(sh[i].x, sh[i].y);
+            dl->AddCircleFilled(c, sh[i].r, sh[i].held ? IM_COL32(255, 255, 255, 150) : IM_COL32(0, 0, 0, 70));
+            dl->AddCircle(c, sh[i].r, IM_COL32(255, 255, 255, sh[i].held ? 230 : 140), 0, 3 * scale);
+            if (sh[i].label[0]) {
+                ImVec2 ts = ImGui::CalcTextSize(sh[i].label);
+                dl->AddText(ImVec2(c.x - ts.x * 0.5f, c.y - ts.y * 0.5f), IM_COL32(255, 255, 255, 220), sh[i].label);
+            }
+        }
     }
     if (open) quit_draw(io, scale);
     else if (cfg && !kbd) cfg_draw(io, scale);

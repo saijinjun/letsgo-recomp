@@ -11,6 +11,9 @@
 #endif
 
 #include "paths.h"
+#ifdef __ANDROID__
+#include <SDL3/SDL.h>
+#endif
 #include "rt.h"
 
 static const GameLibTables *g_tables;
@@ -60,19 +63,37 @@ static int candidates(const char *game_dir, char out[3][1100]) {
     int n = 0;
     const char *env = getenv("LARECOMP_GAME_LIB");
     if (env && *env) snprintf(out[n++], 1100, "%s", env);
+#ifdef __ANDROID__
+    // the app's internal storage (built on the phone, later), then the APK's own (a personal APK with the game code
+    // inside: tools/android/build_game.sh), loaded by name from the app's native library folder
+    (void)game_dir;
+    const char *internal = SDL_GetAndroidInternalStoragePath();
+    if (internal) snprintf(out[n++], 1100, "%s/%s", internal, GAMELIB_NAME);
+    snprintf(out[n++], 1100, "%s", GAMELIB_NAME);
+#else
     char exe_side[1024];
     if (rt_resource(GAMELIB_NAME, NULL, exe_side, sizeof exe_side) && exists(exe_side))
         snprintf(out[n++], 1100, "%s", exe_side);
     if (game_dir) snprintf(out[n++], 1100, "%s/%s", game_dir, GAMELIB_NAME);
+#endif
     return n;
 }
+
+// A library named without a folder (Android: the APK's own) isn't a file to check: loading it, its own id decides.
+#ifdef __ANDROID__
+static bool in_apk(const char *p) { return !strchr(p, '/'); }
+#else
+static bool in_apk(const char *p) { (void)p; return false; }
+#endif
 
 bool gamelib_present(const char *game_dir) {
     if (g_tables) return true;
     char c[3][1100];
     int n = candidates(game_dir, c);
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
+        if (in_apk(c[i])) return gamelib_load(game_dir, NULL, 0);
         if (exists(c[i]) && id_matches(c[i])) return true;
+    }
     return false;
 }
 
@@ -106,11 +127,11 @@ bool gamelib_load(const char *game_dir, char *why, size_t why_size) {
         const char *env = getenv("LARECOMP_GAME_LIB");
         for (int i = 0; i < n && !g_tables; i++) {
             bool given = i == 0 && env && *env;  // LARECOMP_GAME_LIB: loaded as given, the library's own id decides
-            if (!exists(c[i])) {
+            if (!in_apk(c[i]) && !exists(c[i])) {
                 if (given) { snprintf(g_error, sizeof g_error, "LARECOMP_GAME_LIB: no file %s", c[i]); break; }
                 continue;
             }
-            if (!given && !id_matches(c[i])) {
+            if (!given && !in_apk(c[i]) && !id_matches(c[i])) {
                 snprintf(g_error, sizeof g_error, "%s was built for another version", c[i]);
                 continue;
             }

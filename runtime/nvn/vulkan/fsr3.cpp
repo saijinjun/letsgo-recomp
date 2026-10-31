@@ -3,6 +3,16 @@
 // amd_fidelityfx_vk.dll, loaded at run time next to the exe: without it the upscaler stays FSR 1 (exec.c).
 // exec.c post_process hands it the game image at the render resolution with the scene's depth, the motion vectors
 // (camera and per object) and a mask of the interface; the scene was jittered by fsr3_jitter's sequence.
+#ifndef _WIN32
+// The SDK's Vulkan backend ships only as a Windows DLL: elsewhere (Linux, Android) the upscaler stays FSR 1 (exec.c).
+extern "C" {
+#include "fsr3.h"
+}
+extern "C" bool fsr3_available(void) { return false; }
+extern "C" void fsr3_jitter(uint32_t, uint32_t, uint64_t, float *jx, float *jy) { *jx = *jy = 0; }
+extern "C" bool fsr3_dispatch(VkCommandBuffer, const Fsr3Dispatch *) { return false; }
+extern "C" void fsr3_shutdown(void) {}
+#else
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -165,3 +175,4 @@ extern "C" void fsr3_shutdown(void) {
     if (ctx) { vkDeviceWaitIdle(g_vk.dev); fx.DestroyContext(&ctx, NULL); ctx = NULL; }
 #endif
 }
+#endif  // _WIN32

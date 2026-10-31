@@ -19,6 +19,7 @@
 #include "../nvn/renderer.h"
 #include "../settings.h"
 #include "../input_bind.h"
+#include "touch.h"
 
 enum {
     BTN_A = 0, BTN_B, BTN_X, BTN_Y, BTN_LSTICK, BTN_RSTICK, BTN_L, BTN_R, BTN_ZL, BTN_ZR, BTN_PLUS, BTN_MINUS,
@@ -132,8 +133,15 @@ static void touch_at(SDL_Window *w, float mx, float my) {
     touch_y = (int32_t)(y < 0 ? 0 : y > TOUCH_H - 1 ? TOUCH_H - 1 : y);
 }
 
+// A finger on the game's touch screen (the on-screen controls pass on the fingers that aren't theirs: touch.c)
+void input_touch_screen(SDL_Window *w, float x, float y, bool down) {
+    touch_at(w, x, y);
+    touch_down = down;
+}
+
 // Forget held keys (the menu took focus) and let the mouse go; the gamepad is re-read on its next event.
 void input_reset(void) {
+    touch_reset();
     memset(keys_down, 0, sizeof keys_down);
     recompute_keyboard();
     mouse_release();
@@ -234,6 +242,7 @@ void input_handle_event(const SDL_Event *e) {
         recompute_keyboard();
         break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN: case SDL_EVENT_MOUSE_BUTTON_UP: case SDL_EVENT_MOUSE_MOTION: {
+        if (touch_active()) break;  // (the fingers go through the on-screen controls: touch.c; SDL's mouse copy of them too)
         bool motion = e->type == SDL_EVENT_MOUSE_MOTION;
         SDL_Window *w = SDL_GetWindowFromID(motion ? e->motion.windowID : e->button.windowID);
         // aiming: the window holds the mouse (the gyro); else it is free (the touch screen)
@@ -517,7 +526,7 @@ void input_frame(uint64_t frame) {
 extern bool menu_input_captured(void);  // runtime/ui/menu.mm: overlay menu or name entry up (it has the keys / pad)
 
 // Buttons held right now (keyboard, gamepad, test script), independent of whether the game polls (movies).
-uint64_t input_buttons_now(void) { return (menu_input_captured() ? 0 : key_buttons | pad_buttons | mouse_buttons) | script_buttons; }
+uint64_t input_buttons_now(void) { return (menu_input_captured() ? 0 : key_buttons | pad_buttons | mouse_buttons | touch_buttons()) | script_buttons; }
 
 static int32_t clamp_axis(int32_t v) { return v > 32767 ? 32767 : v < -32767 ? -32767 : v; }
 
@@ -544,7 +553,7 @@ static void fill_state(Cpu *c) {
     }
     bool menu = menu_input_captured();  // the overlay menu / name entry has the controls (typing there isn't for the game)
     const uint64_t zr = 1ull << BTN_ZR;  // (the controller's ZR is its finger on the touch screen: pad_finger)
-    uint64_t b = menu ? script_buttons & ~zr : key_buttons | ((pad_buttons | script_buttons) & ~zr) | mouse_buttons;
+    uint64_t b = menu ? script_buttons & ~zr : key_buttons | ((pad_buttons | script_buttons) & ~zr) | mouse_buttons | touch_buttons();
     {   // injected Plus: held for ~10 presented frames (the game polls several times per frame)
         extern uint64_t renderer_game_frame(void);
         static uint64_t until;
@@ -553,7 +562,9 @@ static void fill_state(Cpu *c) {
         for (int i = 0; i < 4; i++)
             if (g_press_a[i] && renderer_game_frame() >= g_press_a[i] && renderer_game_frame() < g_press_a[i] + 4) b |= 1ull << BTN_A;
     }
-    int32_t lx = clamp_axis((menu ? 0 : key_lx + pad_lx) + script_lx), ly = clamp_axis((menu ? 0 : key_ly + pad_ly) + script_ly);
+    int32_t tlx, tly;
+    touch_stick(&tlx, &tly);
+    int32_t lx = clamp_axis((menu ? 0 : key_lx + pad_lx + tlx) + script_lx), ly = clamp_axis((menu ? 0 : key_ly + pad_ly + tly) + script_ly);
     int32_t rx = clamp_axis((menu ? 0 : key_rx + pad_rx) + script_rx), ry = clamp_axis((menu ? 0 : key_ry + pad_ry) + script_ry);
     // d-pad / arrow keys walk (setting) while the stick is at rest. "At rest" has a dead zone: a controller's stick
     // never reads exactly 0 (a DualSense rests at a few hundred), which used to turn the d-pad off altogether.

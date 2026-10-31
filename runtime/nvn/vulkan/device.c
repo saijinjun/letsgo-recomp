@@ -51,6 +51,9 @@ static void create_instance(void) {
     VkInstanceCreateInfo ci = {.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, .pApplicationInfo = &app,
                                .enabledExtensionCount = n_ext, .ppEnabledExtensionNames = ext,
                                .enabledLayerCount = validate ? 1 : 0, .ppEnabledLayerNames = layers};
+#ifdef VK_NO_PROTOTYPES
+    if (volkInitialize() != VK_SUCCESS) FATAL("no Vulkan loader (libvulkan) found\n");
+#endif
     VkResult r = vkCreateInstance(&ci, NULL, &g_vk.inst);
     if (r != VK_SUCCESS && validate) {
         LOG("[vk] validation layer unavailable (%d); continuing without\n", r);
@@ -60,6 +63,9 @@ static void create_instance(void) {
         r = vkCreateInstance(&ci, NULL, &g_vk.inst);
     }
     if (r != VK_SUCCESS) FATAL("vkCreateInstance: %d (is a Vulkan 1.3 driver installed?)\n", r);
+#ifdef VK_NO_PROTOTYPES
+    volkLoadInstance(g_vk.inst);
+#endif
     if (validate) {
         PFN_vkCreateDebugUtilsMessengerEXT f =
             (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(g_vk.inst, "vkCreateDebugUtilsMessengerEXT");
@@ -245,6 +251,9 @@ static void create_device(void) {
     VkDeviceCreateInfo di = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, .pNext = &f, .queueCreateInfoCount = 1,
                              .pQueueCreateInfos = qi, .enabledExtensionCount = n_ext, .ppEnabledExtensionNames = ext};
     VK_CHECK(vkCreateDevice(g_vk.phys, &di, NULL, &g_vk.dev));
+#ifdef VK_NO_PROTOTYPES
+    volkLoadDevice(g_vk.dev);
+#endif
     vkGetDeviceQueue(g_vk.dev, g_vk.qfam, 0, &g_vk.queue);
     present_q = g_vk.queue;
     if (nqueues == 2 && !getenv("LARECOMP_ONE_QUEUE")) vkGetDeviceQueue(g_vk.dev, g_vk.qfam, 1, &present_q);
@@ -252,6 +261,10 @@ static void create_device(void) {
 
     VmaAllocatorCreateInfo ai = {.physicalDevice = g_vk.phys, .device = g_vk.dev, .instance = g_vk.inst,
                                  .vulkanApiVersion = VK_API_VERSION_1_3};
+#ifdef VK_NO_PROTOTYPES
+    VmaVulkanFunctions vf = {.vkGetInstanceProcAddr = vkGetInstanceProcAddr, .vkGetDeviceProcAddr = vkGetDeviceProcAddr};
+    ai.pVulkanFunctions = &vf;
+#endif
     VK_CHECK(vmaCreateAllocator(&ai, &g_vk.vma));
 
     VkSemaphoreTypeCreateInfo st = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,

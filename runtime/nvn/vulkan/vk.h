@@ -9,7 +9,11 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#ifdef VK_NO_PROTOTYPES
+#include <volk.h>  // (Android: libvulkan exports only the core 1.0 entry points; VOLK=1 on Linux)
+#else
 #include <vulkan/vulkan.h>
+#endif
 #if __has_include(<vma/vk_mem_alloc.h>)
 #include <vma/vk_mem_alloc.h>
 #else

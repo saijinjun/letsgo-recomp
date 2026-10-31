@@ -116,6 +116,17 @@ GAMELIB_LEVEL := $(or $(patsubst -march=x86-64-%,%,$(filter -march=x86-64-v%,$(G
 RT_OBJ   := $(patsubst runtime/%.c,$(B)/rt/%.o,$(RT_SRC))
 RTFLAGS  := -O2 -g -fno-strict-aliasing -Wall -Wno-unused-function -Iruntime -Iruntime/nvn $(DEPINC) $(OSFLAGS)
 CXXFLAGS := -O2 -g -std=c++17 -I$(IMGUI) -I$(IMGUI)/backends -Iruntime -Iruntime/nvn -Ithird_party/fidelityfx/include $(DEPINC)
+# VOLK=<volk checkout>: Vulkan through volk (VK_NO_PROTOTYPES) as on Android, without -lvulkan (to test that path here)
+ifneq ($(VOLK),)
+VOLKFLAGS := -DVK_NO_PROTOTYPES -DIMGUI_IMPL_VULKAN_USE_VOLK -I$(VOLK)
+RTFLAGS  += $(VOLKFLAGS)
+CXXFLAGS += $(VOLKFLAGS)
+LDFLAGS  := $(filter-out -lvulkan,$(LDFLAGS))
+BACKEND_OBJ += $(B)/volk.o
+$(B)/volk.o: $(VOLK)/volk.c
+	@mkdir -p $(dir $@)
+	$(CC) -O2 -g $(VOLKFLAGS) -c $< -o $@
+endif
 
 all: $(EXE) $(if $(GEN_SRC),$(GAMELIB))
 

@@ -41,3 +41,6 @@ android/app/build/
 android/app/.cxx/
 android/local.properties
 android/keystore.properties
+android/gradlew
+android/gradlew.bat
+android/gradle/wrapper/gradle-wrapper.jar

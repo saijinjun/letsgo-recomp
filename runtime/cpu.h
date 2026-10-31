@@ -50,6 +50,19 @@ static inline void rt_set_fpcr(uint64_t v) { (void)v; }
 static inline void rt_set_fpsr(uint64_t v) { (void)v; }
 #endif
 
+// Where the host can't give the guest the Switch-style window at 0x70_0000_0000 (Android: the zygote maps its
+// libraries and heaps there on 39-bit kernels), the whole guest layout sits GUEST_SHIFT lower (as LASRecomp-Android-Plus
+// does). Recompiled functions and labels keep their unshifted names (f_7000...), and so do patches and the runtime's
+// hook tables: only the values move. tools/gen.py --shift must match (runtime/gamebuild.c).
+#ifndef GUEST_SHIFT
+#if defined(__ANDROID__)
+#define GUEST_SHIFT 0x6000000000ull
+#else
+#define GUEST_SHIFT 0ull
+#endif
+#endif
+#define GUEST(a) ((uint64_t)(a) - GUEST_SHIFT)  // an address of the unshifted (Switch) layout, where the guest has it
+
 // ---- memory: guest addresses are host addresses
 typedef uint16_t __attribute__((aligned(1), may_alias)) u16u;
 typedef uint32_t __attribute__((aligned(1), may_alias)) u32u;

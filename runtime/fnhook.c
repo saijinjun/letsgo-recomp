@@ -52,11 +52,12 @@ static const uint64_t k_pikachu_100[][2] = {
 };
 static int g_build = -1;  // GAME_BUILD_* (runtime/gamesetup.h); -1 before the first boot
 
+// (where the guest sits GUEST_SHIFT lower, runtime/cpu.h: the tables stay in the Switch layout, the result is moved)
 uint64_t rt_addr(uint64_t eevee) {
-    if (g_build == GAME_BUILD_EEVEE_100 || g_build < 0) return eevee;
+    if (g_build == GAME_BUILD_EEVEE_100 || g_build < 0) return GUEST(eevee);
     if (g_build == GAME_BUILD_PIKACHU_100)
         for (size_t i = 0; i < sizeof k_pikachu_100 / sizeof *k_pikachu_100; i++)
-            if (k_pikachu_100[i][0] == eevee) return k_pikachu_100[i][1];
+            if (k_pikachu_100[i][0] == eevee) return GUEST(k_pikachu_100[i][1]);
     return 0;
 }
 
@@ -121,9 +122,11 @@ int rt_fnhook(Cpu *c, uint64_t addr) {
 // The game's function at addr (gamelib tables), run as if called: x0.. as set by the caller of the hook.
 // addr: the hooked function (as the hook received it) or an Eevee 1.0.0 address from the runtime's code (translated).
 void rt_call_original(Cpu *c, uint64_t addr) {
-    if (g_build == GAME_BUILD_PIKACHU_100)
-        for (size_t i = 0; i < sizeof k_pikachu_100 / sizeof *k_pikachu_100; i++)
-            if (k_pikachu_100[i][0] == addr) { addr = k_pikachu_100[i][1]; break; }
+    // (an Eevee 1.0.0 address: always one of the Switch layout's when the guest is shifted, below it a hooked one)
+    if (GUEST_SHIFT ? addr >= 0x7000000000ull : g_build == GAME_BUILD_PIKACHU_100) {
+        uint64_t a = rt_addr(addr);
+        if (a) addr = a;
+    }
     const GameLibTables *t = gamelib_tables();
     for (uint32_t m = 0; t && m < t->nmods; m++) {
         const GameLibModule *md = &t->mods[m];
@@ -148,7 +151,7 @@ typedef struct { uint64_t addr; int nargs; struct { int reg, deref; uint32_t len
 static Dump dumps[32];
 static int ndumps, dump_max = 4;
 
-static bool guest_ptr(uint64_t p) { return p >= 0x7000000000ull && p < 0x7800000000ull; }
+static bool guest_ptr(uint64_t p) { return p >= GUEST_LO && p < GUEST(0x7800000000ull); }
 
 static void hexdump(const char *what, uint64_t p, uint32_t len) {
     LOG("[hook]   %s @%llx (%u bytes):\n", what, (unsigned long long)p, len);

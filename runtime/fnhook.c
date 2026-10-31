@@ -122,7 +122,7 @@ int rt_fnhook(Cpu *c, uint64_t addr) {
 // The game's function at addr (gamelib tables), run as if called: x0.. as set by the caller of the hook.
 // addr: the hooked function (as the hook received it) or an Eevee 1.0.0 address from the runtime's code (translated).
 void rt_call_original(Cpu *c, uint64_t addr) {
-    // (an Eevee 1.0.0 address: always one of the Switch layout's when the guest is shifted, below it a hooked one)
+    // (a reference-build address: always one of the Switch layout's when the guest is shifted, below it a hooked one)
     if (GUEST_SHIFT ? addr >= 0x7000000000ull : g_build == GAME_BUILD_PIKACHU_100) {
         uint64_t a = rt_addr(addr);
         if (a) addr = a;

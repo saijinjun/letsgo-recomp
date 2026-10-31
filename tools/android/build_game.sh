@@ -4,9 +4,10 @@
 # Android address shift) turns exefs/main, sdk, subsdk0 and subsdk1 into C, the NDK compiles that into liblasgame.so
 # (build/android/gamelib/arm64-v8a/), linked against the app's own libmain.so (build the app first:
 # cd android && ./gradlew assembleDebug).
-#   --apk   also build a personal APK with it inside (android/app/build/outputs/apk/debug/app-debug.apk)
+#   --apk   also build a personal APK with it inside (build/android/personal/letsgo-personal.apk)
 #   --push  copy it into the app on the device connected over adb (debug builds: run-as)
-# The result holds code made from the game: keep it to yourself, never share it.
+# The result holds code made from the game: keep it on your own computer and device. Never commit, upload or attach
+# liblasgame.so or the personal APK (git, CI artifacts, releases, PRs).
 # (After LASRecomp-Android-Plus' tools/android/build_game.sh, MIT.)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -83,7 +84,10 @@ ls -la "$OUT/liblasgame.so"
 if [ $APK = 1 ]; then
     echo "== personal APK"
     (cd android && ./gradlew assembleDebug -q -PlasGameLib="$ROOT/build/android/gamelib")
-    ls -la android/app/build/outputs/apk/debug/app-debug.apk
+    # moved out of Gradle's output folder, so the shell APK's path never holds one with the game code inside
+    mkdir -p build/android/personal
+    mv android/app/build/outputs/apk/debug/app-debug.apk build/android/personal/letsgo-personal.apk
+    ls -la build/android/personal/letsgo-personal.apk
 fi
 if [ $PUSH = 1 ]; then
     echo "== into the app on the device"

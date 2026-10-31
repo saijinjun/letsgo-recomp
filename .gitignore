@@ -44,3 +44,9 @@ android/keystore.properties
 android/gradlew
 android/gradlew.bat
 android/gradle/wrapper/gradle-wrapper.jar
+# Game code made from your exefs (tools/android/build_game.sh, make) and any APK: never versioned
+liblasgame.so*
+lasgame.so*
+lasgame.dll*
+*.apk
+*.aab

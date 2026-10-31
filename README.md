@@ -35,17 +35,8 @@ area at 2x. Not Switch captures.* ▶ [Showcase video](https://youtu.be/mGk-wBu1
 
 ## Launcher
 
-<table>
-<tr>
-<td><img src="docs/images/launcher-game.png" alt="Game page"></td>
-<td><img src="docs/images/launcher-graphics.png" alt="Graphics page"></td>
-<td><img src="docs/images/launcher-mods.png" alt="Mods page"></td>
-</tr>
-</table>
-
-In the game, **F12** opens the same settings, applied at once:
-
-![The F12 settings in the game](docs/images/f12-menu.jpg)
+The launcher has Game, Graphics, Image and sound, Controls and Mods pages. In the game, **F12** opens the same
+settings, applied at once. (Screenshots aren't kept in this repository, because they show the game's artwork.)
 
 ## Requirements
 

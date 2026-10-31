@@ -1,0 +1,68 @@
+# CI for the public repository: only the runtime and the Android app shell, never game code. Nothing here reads game
+# files, runs tools/gen.py or tools/android/build_game.sh, or uploads artifacts; tools/check_public.sh fails the run if
+# the tree holds game files, keys, the game code library or an APK.
+name: CI
+on:
+  push:
+    branches: [main, android-port]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-tree:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: tools/check_public.sh
+
+  linux-runtime:
+    needs: public-tree
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies (FFmpeg, Vulkan, SDL3 3.4.18 from its release)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q clang lld ninja-build libavformat-dev libavcodec-dev libavutil-dev libswscale-dev
+          curl -fsSL -o /tmp/sdl.tgz https://github.com/libsdl-org/SDL/releases/download/release-3.4.18/SDL3-3.4.18.tar.gz
+          echo "9c75cf16330322c217dedd2e0609f1124f1b54b8633e763467b4684d0f4334a3  /tmp/sdl.tgz" | sha256sum -c
+          mkdir /tmp/sdl && tar -xf /tmp/sdl.tgz -C /tmp/sdl --strip-components 1
+          cmake -S /tmp/sdl -B /tmp/sdl/b -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/deps \
+            -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DSDL_X11=OFF -DSDL_WAYLAND=OFF -DSDL_UNIX_CONSOLE_BUILD=ON
+          cmake --build /tmp/sdl/b && cmake --install /tmp/sdl/b
+          git clone -q --depth 1 --branch vulkan-sdk-1.4.350.1 https://github.com/KhronosGroup/Vulkan-Headers /tmp/vkh
+          git clone -q --depth 1 --branch v3.3.0 https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator /tmp/vma
+          git clone -q --depth 1 --branch vulkan-sdk-1.4.350.1 https://github.com/zeux/volk /tmp/volk
+          cp -R /tmp/vkh/include/vulkan /tmp/vkh/include/vk_video /tmp/vma/include/vk_mem_alloc.h $HOME/deps/include/
+      - name: Runtime (no game code)
+        run: make -j"$(nproc)" DEPS=$HOME/deps build/lasrecomp
+      - name: Runtime through volk, as on Android
+        run: make -j"$(nproc)" B=build/volk VOLK=/tmp/volk DEPS=$HOME/deps build/volk/lasrecomp
+
+  android-shell:
+    needs: public-tree
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.14.3' }
+      - name: NDK 27.2, platform 36
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+      - name: Native dependencies
+        run: tools/android/build_deps.sh > /tmp/deps.log 2>&1 || { tail -50 /tmp/deps.log; exit 1; }
+      - name: App shell (libmain.so + libSDL3.so, no game code)
+        run: cd android && gradle assembleDebug --console=plain
+      - name: The APK holds no game code
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          unzip -l "$APK" | grep -i lasgame && { echo "game code in the shell APK"; exit 1; } || true
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 "$APK"

@@ -96,6 +96,11 @@ void rt_paths_init(void) {
     else {
 #ifdef _WIN32
         snprintf(root, sizeof root, "%s", g_exe_dir);
+#elif defined(__ANDROID__)
+        // Android/data/<package>/files: the app's own without any permission, and reachable from a computer over USB
+        // (game files, saves, the log)
+        const char *ext = SDL_GetAndroidExternalStoragePath();
+        snprintf(root, sizeof root, "%s", ext ? ext : SDL_GetAndroidInternalStoragePath());
 #elif defined(__linux__)
         // (the AppImage is read-only): $XDG_DATA_HOME/lasrecomp, ~/.local/share/lasrecomp by default
         const char *xdg = getenv("XDG_DATA_HOME"), *home = getenv("HOME");

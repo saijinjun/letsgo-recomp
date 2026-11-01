@@ -42,7 +42,7 @@ void bind_set_layout(int layout) {
     for (int i = 0; i < 4; i++)
         if (g_bind_pad[i] == def_pad(g_layout, i)) g_bind_pad[i] = def_pad(layout, i);
     g_layout = layout;
-    LOG("[input] controller layout: %s\n", layout == BIND_LAYOUT_XBOX ? "Xbox (A bottom, B right)" : "Nintendo (A right, B bottom)");
+    LOG("[input] controller layout: %s\n", layout == BIND_LAYOUT_XBOX ? "Xbox (A bottom, B right)" : "A right, B bottom");
 }
 int16_t g_bind_pad[BIND_PAD_COUNT] = DEF_PAD, g_bind_key[BIND_KEY_COUNT] = DEF_KEY;
 const int16_t g_bind_key2[BIND_PAD_COUNT] = {SDL_SCANCODE_RETURN, SDL_SCANCODE_BACKSPACE};

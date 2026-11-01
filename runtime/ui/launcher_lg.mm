@@ -56,10 +56,10 @@ static const struct { int slot; const char *en, *pt; } k_actions[] = {
     {BIND_LS_DOWN, "Walk down", "Andar para baixo"},         {BIND_B, "B (or Backspace): back", "B (ou Backspace): cancelar"},
     {BIND_LS_LEFT, "Walk left", "Andar para a esquerda"},    {BIND_X, "X: menu", "X: menu"},
     {BIND_LS_RIGHT, "Walk right", "Andar para a direita"},   {BIND_Y, "Y: options / box", "Y: opções / caixa"},
-    {BIND_UP, "D-pad up", "Direcional cima"},                {BIND_L, "L: move Pokémon / items", "L: mover Pokémon / itens"},
-    {BIND_DOWN, "D-pad down", "Direcional baixo"},           {BIND_R, "R: move Pokémon / items", "R: mover Pokémon / itens"},
+    {BIND_UP, "D-pad up", "Direcional cima"},                {BIND_L, "L: move party / items", "L: mover equipe / itens"},
+    {BIND_DOWN, "D-pad down", "Direcional baixo"},           {BIND_R, "R: move party / items", "R: mover equipe / itens"},
     {BIND_LEFT, "D-pad left", "Direcional esquerda"},        {BIND_PLUS, "+: partner", "+: parceiro"},
-    {BIND_RIGHT, "D-pad right", "Direcional direita"},       {BIND_MINUS, "-: Pokédex", "-: Pokédex"},
+    {BIND_RIGHT, "D-pad right", "Direcional direita"},       {BIND_MINUS, "-: index", "-: índice"},
 };
 
 static const char *key_name(int sc) {
@@ -113,8 +113,8 @@ static void keys_section(void) {
     }
     ui_heading(T("Mouse and controller", "Mouse e controle"));
     ImGui::PushTextWrapPos(0);
-    ImGui::TextDisabled("%s", T("Mouse while aiming a Poké Ball: move = aim, left = throw.",
-                                "Mouse na mira da Poké Ball: mover = mirar, esquerdo = arremessar."));
+    ImGui::TextDisabled("%s", T("Mouse while aiming a throw: move = aim, left = throw.",
+                                "Mouse na mira do arremesso: mover = mirar, esquerdo = arremessar."));
     ImGui::TextDisabled("%s", T("Otherwise: left = touch screen (Play with your partner). Right = B.",
                                 "Fora dela: esquerdo = tocar na tela (Brincar com o parceiro). Direito = B."));
     ImGui::PopTextWrapPos();
@@ -214,27 +214,25 @@ static void game_files_section(SDL_Window *win) {
     }
     bool ready = setup_ready();
     if (ready) {
-        const char *name = game_name("extracted/exefs");
-        ImGui::TextColored(k_green, g_pt ? "Pokémon: Let's Go, %s! - pronto para jogar" : "Pokémon: Let's Go, %s! - ready to play",
-                           name ? name : "Eevee");
+        ImGui::TextColored(k_green, "%s", T("Game files - ready to play", "Arquivos do jogo - prontos para jogar"));
         if (ui_button(T("Change folder...", "Trocar pasta..."))) SDL_ShowOpenFolderDialog(picked_game, NULL, win, NULL, false);
         return;
     }
     if (st >= SETUP_FAIL_NOT_FOUND) {
         static const char *const en[] = {"No game files found in that folder.", "Those are packed game files (.xci / .nsp).",
-                                         "That's not Pokémon: Let's Go, Eevee! or Pikachu!.", "The files couldn't be copied.",
+                                         "That's not a game this port supports.", "The files couldn't be copied.",
                                          "The game code didn't build.", "The game code builder is missing from this copy.",
                                          "The game's data image (romfs.bin) can't be read."};
         static const char *const pt[] = {"Nenhum arquivo do jogo nessa pasta.", "Esses são arquivos do jogo empacotados (.xci / .nsp).",
-                                         "Isso não é o Pokémon: Let's Go, Eevee! nem o Pikachu!.", "Os arquivos não puderam ser copiados.",
+                                         "Esse não é um jogo que este port suporta.", "Os arquivos não puderam ser copiados.",
                                          "O código do jogo não compilou.", "O compilador do código do jogo não está nesta cópia.",
                                          "A imagem de dados do jogo (romfs.bin) não pode ser lida."};
         static const char *const en_h[] = {"Choose the folder that holds exefs and romfs.", "Extract them first (exefs and romfs).",
-                                           "Pick the folder of your own extracted Let's Go, Eevee! or Pikachu!.", "Check there are about 6 GB free and try again.",
+                                           "Pick the folder of your own extracted copy of the game.", "Check there are about 6 GB free and try again.",
                                            "Check there are about 2 GB free and try again; details in lasrecomp.log.", "Download the release again.",
                                            "Pick the folder with the romfs folder itself (not a romfs.bin from another tool); details in lasrecomp.log."};
         static const char *const pt_h[] = {"Escolha a pasta que tem exefs e romfs.", "Extraia antes (exefs e romfs).",
-                                           "Escolha a pasta do seu Let's Go, Eevee! ou Pikachu! extraído.", "Confira se há uns 6 GB livres e tente de novo.",
+                                           "Escolha a pasta da sua própria cópia extraída do jogo.", "Confira se há uns 6 GB livres e tente de novo.",
                                            "Confira se há uns 2 GB livres e tente de novo; detalhes no lasrecomp.log.", "Baixe a release de novo.",
                                            "Escolha a pasta com a própria pasta romfs (não um romfs.bin de outra ferramenta); detalhes no lasrecomp.log."};
         int k = st - SETUP_FAIL_NOT_FOUND;
@@ -244,8 +242,8 @@ static void game_files_section(SDL_Window *win) {
         ImGui::PopTextWrapPos();
     } else {
         ImGui::PushTextWrapPos(0);
-        ImGui::TextUnformatted(T("Select the folder with your own extracted Pokémon: Let's Go, Eevee! or Pikachu! (exefs and romfs).",
-                                 "Selecione a pasta com o seu Pokémon: Let's Go, Eevee! ou Pikachu! extraído (exefs e romfs)."));
+        ImGui::TextUnformatted(T("Select the folder with your own extracted copy of the game (exefs and romfs).",
+                                 "Selecione a pasta com a sua própria cópia extraída do jogo (exefs e romfs)."));
         ImGui::PopTextWrapPos();
     }
     if (ui_button(T("Select game folder...", "Selecionar pasta do jogo..."), -1))
@@ -550,8 +548,8 @@ extern "C" void launcher_lg_run(const char *root) {
         ImGui::NewFrame();
         float s = g_scale;
         bool known = !setup_ready() || game_build("extracted/exefs") != GAME_BUILD_OTHER;
-        const char *only = T("Only with version 1.0.0 (the base game) of Eevee or Pikachu for now.",
-                             "Por enquanto só na versão 1.0.0 (o jogo base) do Eevee ou do Pikachu.");
+        const char *only = T("Only with version 1.0.0 (the base game) of either edition for now.",
+                             "Por enquanto só na versão 1.0.0 (o jogo base) de qualquer das duas edições.");
         const char *names[NTABS] = {T("Game", "Jogo"), T("Graphics", "Gráficos"), T("Image and sound", "Imagem e som"),
                                     T("Controls", "Controles"), "Mods"};
         ui_tabs_begin(&tab, NTABS);  // (L1 / R1 on a controller: the page before / after)
@@ -654,20 +652,20 @@ extern "C" void launcher_lg_run(const char *root) {
                 float ox = ui_label_x(ol, 3);
                 ImGui::BeginDisabled(!known);
                 ui_toggle("##wild", ol[0], ox, &wildb);
-                ui_tip(!known ? only : T("Touching a wild Pokémon starts a classic battle instead of going straight to the capture. "
-                                         "Its CATCH button throws one Poké Ball, with better odds the weaker the Pokémon is.",
-                                         "Encostar num Pokémon selvagem começa uma batalha clássica em vez de ir direto para a captura. "
-                                         "O botão de captura (CATCH) joga uma Poké Bola, com mais chance quanto mais fraco o Pokémon estiver."));
+                ui_tip(!known ? only : T("Touching a wild creature starts a classic battle instead of going straight to the capture. "
+                                         "Its CATCH button makes one throw, with better odds the weaker the creature is.",
+                                         "Encostar numa criatura selvagem começa uma batalha clássica em vez de ir direto para a captura. "
+                                         "O botão de captura (CATCH) faz um arremesso, com mais chance quanto mais fraca a criatura estiver."));
                 ui_toggle("##skipc", ol[1], ox, &skipc);
-                ui_tip(!known ? only : T("The game starts at the Game Freak logo, with your controller already chosen, instead of asking for a button press first.",
-                                         "O jogo começa no logo da Game Freak, com o seu controle já escolhido, em vez de pedir antes que se aperte um botão."));
+                ui_tip(!known ? only : T("The game starts at the studio logo, with your controller already chosen, instead of asking for a button press first.",
+                                         "O jogo começa no logo do estúdio, com o seu controle já escolhido, em vez de pedir antes que se aperte um botão."));
                 ImGui::EndDisabled();
-                const char *lay[] = {"Nintendo", "Xbox"};
+                const char *lay[] = {"A right", "A bottom (Xbox)"};
                 int lv = bind_layout();
                 ui_row(ol[2], ox);
                 if (ui_combo("##padlayout", &lv, lay, 2)) bind_set_layout(lv);
-                ui_tip(T("Which controller buttons are A / B and X / Y. Nintendo: A right, B bottom. Xbox: A bottom, B right, as the letters on an Xbox controller. The button prompts follow.",
-                         "Quais botões do controle são A / B e X / Y. Nintendo: A à direita, B embaixo. Xbox: A embaixo, B à direita, como as letras de um controle de Xbox. Os ícones dos botões acompanham."));
+                ui_tip(T("Which controller buttons are A / B and X / Y. A right: A right, B bottom. Xbox: A bottom, B right, as the letters on an Xbox controller. The button prompts follow.",
+                         "Quais botões do controle são A / B e X / Y. A à direita: A à direita, B embaixo. Xbox: A embaixo, B à direita, como as letras de um controle de Xbox. Os ícones dos botões acompanham."));
             } else if (tab == TAB_GRAPHICS) {
                 const char *extra[] = {T("Resolution", "Resolução"), T("Fullscreen", "Tela cheia")};
                 float x = ui_graphics_x(extra, 2);

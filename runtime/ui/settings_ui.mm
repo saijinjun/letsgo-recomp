@@ -521,12 +521,12 @@ void ui_page_graphics(float x, bool known) {
         ImGui::BeginDisabled(!known);
         if (ui_combo("##fps", &f, fr, 3)) g_settings.fps = f == 2 ? 120 : f == 1 ? 60 : 30;
         ImGui::EndDisabled();
-        ui_tip(!known ? UI_T("Only with version 1.0.0 (the base game) of Eevee or Pikachu for now.",
-                             "Por enquanto só na versão 1.0.0 (o jogo base) do Eevee ou do Pikachu.",
-                             "Пока только с версией 1.0.0 (базовая игра) Eevee или Pikachu.")
-                      : UI_T("The world at 60 or 120 fps; menus and the Pokédex smoothed; battles and captures stay at 30.",
-                             "Mundo a 60 ou 120 fps; menus e Pokédex suavizados; batalhas e capturas continuam a 30.",
-                             "Мир на 60 или 120 к/с; меню и Покедекс сглажены; бои и поимки остаются на 30."));
+        ui_tip(!known ? UI_T("Only with version 1.0.0 (the base game) of either edition for now.",
+                             "Por enquanto só na versão 1.0.0 (o jogo base) de qualquer das duas edições.",
+                             "Пока только с версией 1.0.0 (базовая игра) любого из двух изданий.")
+                      : UI_T("The world at 60 or 120 fps; menus and the index smoothed; battles and captures stay at 30.",
+                             "Mundo a 60 ou 120 fps; menus e índice suavizados; batalhas e capturas continuam a 30.",
+                             "Мир на 60 или 120 к/с; меню и указатель сглажены; бои и поимки остаются на 30."));
     }
     ui_group_gap();
     // SSAO and GI by quality level (their parameters: settings_apply_levels; high = what they had before the levels)

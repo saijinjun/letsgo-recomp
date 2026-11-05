@@ -1,8 +1,8 @@
 # Let's Go Recomp on Android (work in progress)
 
 A native arm64 Android build of the runtime, after [LASRecomp-Android-Plus](https://github.com/Nycolazs/LASRecomp-Android-Plus)
-(MIT), which does the same for LAS Recomp. Status: the runtime builds for Android in principle; the app has not been
-built or run on a device yet.
+(MIT), which does the same for LAS Recomp. Status: the app (libmain.so + libSDL3.so) builds with NDK 27.2 and Gradle,
+debug and release; it has not been run on a device yet.
 
 ## What differs from the desktop builds
 
@@ -21,7 +21,8 @@ built or run on a device yet.
 
 ## Building (Linux or macOS)
 
-Needs the Android SDK with NDK 27.2.12479018, CMake, Ninja, JDK 17, Python 3 and Gradle (or Android Studio). The
+Needs the Android SDK with NDK 27.2.12479018 (and platform 36), CMake, Ninja, git, JDK 17 or newer, Python 3 and Gradle
+(or Android Studio). `build_deps.sh` takes SDL3 from its release and the rest from git at pinned commits. The
 Gradle wrapper isn't committed: make it once with `cd android && gradle wrapper` (the version is in
 `android/gradle/wrapper/gradle-wrapper.properties`).
 
@@ -29,10 +30,13 @@ Gradle wrapper isn't committed: make it once with `cd android && gradle wrapper`
 tools/android/build_deps.sh                         # FFmpeg, shaderc, Vulkan headers, VMA, volk, SDL3 sources
 (cd android && ./gradlew assembleDebug)             # the app: libmain.so + libSDL3.so
 tools/android/build_game.sh extracted --apk         # liblasgame.so from your exefs/, and a personal APK with it
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r build/android/personal/letsgo-personal.apk
 ```
 
-The personal APK holds code made from the game: keep it to yourself.
+`liblasgame.so` and the personal APK hold code made from the game: build and install them on your own computer and
+device only. They never go into git, CI artifacts, releases or PR attachments (`.gitignore` and `tools/check_public.sh`
+guard against it). The app shell from `assembleDebug` alone holds no game code. CI (`.github/workflows/ci.yml`) builds
+only the runtime and the app shell, and uploads nothing.
 
 ## Not done yet
 

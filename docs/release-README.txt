@@ -1,14 +1,14 @@
 Let's Go Recomp
 ===============
 
-A native Windows port of Pokemon: Let's Go, Eevee! and Pikachu! (Nintendo Switch) by static recompilation.
+A native Windows port of a 2018 Switch game, both editions, by static recompilation.
 Project page, full documentation and source code: https://github.com/raulzrrs/letsgo-recomp
 
-NO GAME FILES ARE INCLUDED. You need your own legally obtained copy of Pokemon: Let's Go, Eevee! or Pikachu!,
+NO GAME FILES ARE INCLUDED. You need your own legally obtained copy of the game,
 extracted (the exefs and romfs folders).
 
-Supported: Pokemon: Let's Go, Eevee! (title id 0100187003A36000) and Pikachu! (010003F003A34000), any version.
-The experimental options below need version 1.0.0 (the base game) of either; Pikachu 1.0.0
+Supported: title ids 0100187003A36000 and 010003F003A34000 (the two editions), any version.
+The experimental options below need version 1.0.0 (the base game) of either; 010003F003A34000 1.0.0
 was tested up to the name screen of a new game. Cartridge or eShop, any region.
 Packed files (.xci, .nsp, .nsz, .nca) must be extracted first.
 
@@ -35,14 +35,14 @@ How to play
 
 Experimental options (start screen; version 1.0.0 of either game: greyed out for updated games)
 - Frame rate limit (Graphics page, also in the F12 menu): 30 (the game's), 60 or 120 fps - the overworld at that rate
-  without speed-ups; menus and the Pokedex smoothed; battles and captures stay at 30.
-- Wild battles (Game page, off by default): touching a wild Pokemon starts a classic battle against it, then the capture.
+  without speed-ups; menus and the index smoothed; battles and captures stay at 30.
+- Wild battles (Game page, off by default): touching a wild creature starts a classic battle against it, then the capture.
 The controller stick dead zone is on the Controls page.
 
-Both games: one folder holds one set-up game, so unzip this twice (e.g. LetsGoRecomp-Eevee and LetsGoRecomp-Pikachu)
+Both games: one folder holds one set-up game, so unzip this twice (e.g. LetsGoRecomp-1 and LetsGoRecomp-2)
 and set each one up with its game.
 
-Everything stays in this folder: settings (larecomp.ini), saves (save\, or save-pikachu\ for Pikachu), the game files (extracted\), mods and
+Everything stays in this folder: settings (larecomp.ini), saves (save\, or save-pikachu\ for 010003F003A34000), the game files (extracted\), mods and
 translations (mods\) and the log (lasrecomp.log). To move or back up the game, move or copy the whole folder.
 
 Translations and mods
@@ -52,7 +52,7 @@ came; packs made for Atmosphere / LayeredFS work: translations, textures, models
 at once (where two replace the same file, the higher one in the list wins).
 Mods of the game's code (exefs, IPS patches, cheats) don't work in this port.
 
-Portugues (Brasil): para jogar em portugues, baixe a traducao PT-BR de fas do grupo Pokemon Switch Brasil, abra a pagina
+Portugues (Brasil): para jogar em portugues, baixe a traducao PT-BR de fas, abra a pagina
 "Mods", clique em "Instalar mod..." e escolha o arquivo baixado (.rar ou .zip, do jeito que veio). Ela ja vem marcada
 na lista.
 A traducao substitui os textos em ingles e espanhol: num jogo novo, escolha English ou Espanol na tela de idioma do
@@ -63,14 +63,14 @@ Controls
 Keyboard: WASD walk, Space/Enter = A, Q/Backspace = B, Tab = X (menu), R = Y, Z/C = L/R, = and - = Plus/Minus,
 arrows = D-pad, Esc = close, F12 = settings (volume, image, effects; on a controller: - and + together, then Settings).
 All keys can be changed on the start screen.
-Mouse: aims Poke Balls (like the Switch's motion controls), left button throws; outside of aiming, the left button is
+Mouse: aims throws (like the Switch's motion controls), left button throws; outside of aiming, the left button is
 a finger on the touch screen (Play with your partner). Right button = B.
 Controllers: any controller SDL recognizes (Xbox, PlayStation, Switch Pro...), handheld-mode layout. The right stick
 plus ZR is a finger on the touch screen.
 
 Troubleshooting
 ---------------
-- "Not Pokemon: Let's Go, Eevee! or Pikachu!": pick the folder of your own extracted game.
+- "That's not a game this port supports": pick the folder of your own extracted game.
 - Packed game files (.xci / .nsp) must be extracted first.
 - "The game code builder is missing": your antivirus may have quarantined lasgen\lasgen.exe (a PyInstaller
   program, sometimes flagged by mistake). Restore it or add this folder as an exception.
@@ -78,7 +78,7 @@ Troubleshooting
 
 Legal
 -----
-Fan project, not affiliated with Nintendo, The Pokemon Company, Game Freak or Creatures. MIT licensed (LICENSE.txt),
+Unofficial fan project, not affiliated with or endorsed by the game's developers, publishers or rights holders. MIT licensed (LICENSE.txt),
 based on LAS Recomp by Peiikai (LICENSE-LASRecomp.txt, https://github.com/peiikai/LASRecomp).
 Bundled: SDL3 (zlib), FFmpeg (LGPL 2.1, built with only the decoders the game needs; source: https://ffmpeg.org),
 shaderc (Apache 2.0), libiconv (LGPL), Zig (MIT), the Baloo 2 font (SIL OFL 1.1, Baloo2-OFL.txt),

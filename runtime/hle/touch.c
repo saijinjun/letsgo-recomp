@@ -1,7 +1,7 @@
 // On-screen controls for touch screens (Android; LARECOMP_TOUCH=1 shows them on the desktop, the mouse as a finger):
 // a stick that starts where the left thumb lands, A B X Y on the right (the Switch's places: A east), L / ZL and R / ZR
 // in the top corners, - and + at the top, and a settings button between them. A finger anywhere else is a finger on
-// the game's touch screen (Play with Eevee's petting, the berry button). The controls show from the first touch and
+// the game's touch screen (the petting mode, the berry button). The controls show from the first touch and
 // hide when a controller or the keyboard is used. Drawn by runtime/ui/menu.mm (touch_shapes).
 #include <SDL3/SDL.h>
 #include <math.h>

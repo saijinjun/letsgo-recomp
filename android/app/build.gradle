@@ -25,7 +25,7 @@ android {
         externalNativeBuild {
             cmake {
                 targets 'main', 'SDL3-shared'
-                arguments '-DANDROID_STL=c++_static'
+                arguments '-DANDROID_STL=c++_static', '-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON'  // (16 KB page devices: SDL3 too)
             }
         }
     }
@@ -72,7 +72,8 @@ android {
 
 // What the app ships besides code (runtime/paths.c android_resources): the start screen font and the icon
 tasks.register('lgAssets', Sync) {  // (Sync: a file gone from the sources goes from the APK too)
-    from('../../third_party/fonts/Baloo2-SemiBold.ttf')
+    from('../../third_party/fonts/Baloo2/Baloo2-SemiBold.ttf')
+    from('../../third_party/fonts/Baloo2/OFL.txt') { rename { 'Baloo2-OFL.txt' } }
     from('../../docs/icon/icon_1024.png') { rename { 'icon.png' } }
     into "$buildDir/generated/lg-assets"
 }

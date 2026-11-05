@@ -1,14 +1,14 @@
 # Let's Go Recomp
 
-A native Windows port of **Pokémon: Let's Go, Eevee!** and **Let's Go, Pikachu!** (Nintendo Switch), made by
-**static recompilation**: the game's ARM64 code is translated into C and compiled for your PC, and a runtime stands in
+A native Windows (and, in progress, Android) port of a 2018 Switch game, in both of its editions (title ids
+`0100187003A36000` and `010003F003A34000`), made by **static recompilation**: the game's ARM64 code is translated into C and compiled for your PC, and a runtime stands in
 for the Switch (system services, NVN graphics on Vulkan, audio, controllers). **It is not an emulator.** Built on
 **[LAS Recomp](https://github.com/peiikai/LASRecomp)** by Peiikai.
 
 > [!IMPORTANT]
-> **No game files are included.** You need your own legally obtained copy of *Let's Go, Eevee!* or *Pikachu!*,
-> extracted (the `exefs` and `romfs` folders). A fan project, not affiliated with Nintendo, The Pokémon Company, Game
-> Freak or Creatures.
+> **No game files are included.** You need your own legally obtained copy of the game, extracted (the `exefs` and
+> `romfs` folders). An unofficial fan project, not affiliated with or endorsed by the game's developers, publishers or
+> rights holders.
 
 > [!NOTE]
 > **Work in progress.** The game hasn't been played from start to finish on this port yet. Bug reports, fixes and
@@ -29,23 +29,14 @@ area at 2x. Not Switch captures.* ▶ [Showcase video](https://youtu.be/mGk-wBu1
 - The game's **30 fps**, or **60 / 120 fps** in the overworld (experimental), plus **frame generation** (2x / 3x / 4x, any GPU)
 - **2x interface** images and sharper text
 - **Mods**: fan translations and other LayeredFS mods, several at once
-- Keyboard and mouse (aim Poké Balls, touch screen) and any controller, with the Nintendo or Xbox button layout; every key rebindable
+- Keyboard and mouse (aim throws, touch screen) and any controller, with the A-right or Xbox button layout; every key rebindable
 - Experimental **wild battles** (a classic battle, then the capture) and **skip controller selection**
 - Shaders cached on disk
 
 ## Launcher
 
-<table>
-<tr>
-<td><img src="docs/images/launcher-game.png" alt="Game page"></td>
-<td><img src="docs/images/launcher-graphics.png" alt="Graphics page"></td>
-<td><img src="docs/images/launcher-mods.png" alt="Mods page"></td>
-</tr>
-</table>
-
-In the game, **F12** opens the same settings, applied at once:
-
-![The F12 settings in the game](docs/images/f12-menu.jpg)
+The launcher has Game, Graphics, Image and sound, Controls and Mods pages. In the game, **F12** opens the same
+settings, applied at once. (Screenshots aren't kept in this repository, because they show the game's artwork.)
 
 ## Requirements
 
@@ -59,12 +50,12 @@ In the game, **F12** opens the same settings, applied at once:
 
 ## Supported games
 
-- *Let's Go, Eevee!* and *Let's Go, Pikachu!*, any region, from your own dump (cartridge or eShop)
+- Both editions (`0100187003A36000`, `010003F003A34000`), any region, from your own dump (cartridge or download)
 - **1.0.0** (the base game) for every option; the 1.0.1 / 1.0.2 updates are accepted, less tested, without the frame
   rate, wild battles and controller options
 - `.xci` / `.nsp` files must be extracted first
 
-Most tested with *Eevee* 1.0.0; *Pikachu* 1.0.0 less.
+Most tested with `0100187003A36000` 1.0.0; `010003F003A34000` 1.0.0 less.
 
 ## How to play
 
@@ -82,8 +73,8 @@ one folder each.
 
 On the **Mods** page, **Install a mod...** takes the `.zip` / `.rar` / `.7z` as downloaded (Atmosphere LayeredFS
 packs: translations, textures, models). Tick the ones to use; where two change the same file, the higher one wins.
-Mods of the game's code (exefs, IPS, cheats) don't work. Tested with the Brazilian Portuguese fan translation by
-**Pokémon Switch Brasil** (not included; distributed by its authors).
+Mods of the game's code (exefs, IPS, cheats) don't work. Tested with a Brazilian Portuguese fan translation (not
+included; distributed by its authors).
 
 ## Known issues
 
@@ -91,7 +82,7 @@ Mods of the game's code (exefs, IPS, cheats) don't work. Tested with the Brazili
 - Wild battles don't split experience yet
 - Switching to TAA while playing shows one or two black frames
 - The 2x interface shows a few frames of thin stripes during an area change
-- Online features, the Poké Ball Plus and the second player aren't supported
+- Online features, the ball-shaped accessory controller and the second player aren't supported
 
 Crashes: please open an issue with `lasrecomp.log` ([CONTRIBUTING.md](CONTRIBUTING.md)). What changed in each
 release: [CHANGELOG.md](CHANGELOG.md).
@@ -102,11 +93,11 @@ release: [CHANGELOG.md](CHANGELOG.md).
 - **Iván Serrano ([@Vancete](https://github.com/Vancete))**: the F12 menu, TAA and FSR 3.1, the 2x interface and sharper
   text, frame generation (FSR 3.1's, then the in-house 2x / 3x / 4x), 120 fps and the walking fix, skipping the
   controller screen, the menus' look, the Xbox controller layout, SSAO Ultra
-- **Pokémon Switch Brasil**: the Brazilian Portuguese fan translation used in testing
+- The Brazilian Portuguese fan translators, whose translation was used in testing
 - Libraries: SDL 3, FFmpeg (LGPL), Dear ImGui, Vulkan Memory Allocator, shaderc, SMAA, AMD FidelityFX (FSR 1, FSR 3.1),
   bcdec, stb, waifu2x-ncnn-vulkan, the Baloo 2 font (OFL), Capstone, Unicorn, PyInstaller, Zig
 
 ## License
 
 The code in this repository is under the [MIT license](LICENSE), like LAS Recomp; third-party components keep their
-own licenses. It grants no rights to the game. *Pokémon* and *Let's Go* are trademarks of their respective owners.
+own licenses. It grants no rights to the game. All trademarks belong to their respective owners.
